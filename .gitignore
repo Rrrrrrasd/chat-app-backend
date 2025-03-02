@@ -1,0 +1,64 @@
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+# 로그 파일 무시
+logs/
+*.log
+*.log.*
+
+# 환경 설정 파일 무시 (보안)
+application.yml
+application.properties
+
+# 캐시 파일 및 실행 파일 무시
+*.class
+*.jar
+*.war
+*.ear
+
+# Lombok 관련 파일 무시
+.lombok/
+
+# OS별 불필요한 파일 무시
+.DS_Store
+Thumbs.db
+
+# 데이터베이스 파일 (H2, SQLite 등)
+*.db
+*.mv.db
+*.h2.db
