@@ -1,7 +1,7 @@
-package com.example.backend.config;
+package com.example.backend.common.config;
 
-import com.example.backend.filter.JwtAuthenticationFilter;
-import com.example.backend.util.JwtUtil;
+import com.example.backend.common.filter.JwtAuthenticationFilter;
+import com.example.backend.common.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

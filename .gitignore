@@ -41,8 +41,8 @@ logs/
 *.log.*
 
 # 환경 설정 파일 무시 (보안)
-application.yml
-application.properties
+application-db.properties
+application-secret.properties
 
 # 캐시 파일 및 실행 파일 무시
 *.class

@@ -1,5 +1,6 @@
-package com.example.backend.dto;
+package com.example.backend.common.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
