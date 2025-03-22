@@ -7,7 +7,9 @@ import com.example.backend.common.util.JwtUtil;
 
 import com.example.backend.common.dto.LoginRequestDTO;
 import com.example.backend.common.dto.SignupRequestDTO;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -28,12 +30,12 @@ public class UserService {
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public ResponseEntity<?> registerUser(SignupRequestDTO signupRequestDTO) {
+    public String  registerUser(SignupRequestDTO signupRequestDTO) {
         // 이미 등록된 아이디인지 확인
         UserModel existingUser = userMapper.selectUserByUsername(signupRequestDTO.getUsername());
 
         if (existingUser != null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("이미 사용 중인 아이디입니다.");
+            throw new RuntimeException("이미 사용 중인 아이디입니다.");
         }
         // 비밀번호 암호화 및 사용자 생성
         UserModel newUser = new UserModel();
@@ -41,40 +43,44 @@ public class UserService {
         newUser.setPassword(passwordEncoder.encode(signupRequestDTO.getPassword()));
         newUser.setNickname(signupRequestDTO.getNickname());
         userMapper.insertUser(newUser);
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("message", "회원가입이 성공적으로 완료되었습니다."));
+        return "회원가입이 성공적으로 완료되었습니다.";
     }
 
-    public ResponseEntity<?> login(LoginRequestDTO loginRequestdto) {
+    public String login(LoginRequestDTO loginRequestdto, HttpServletResponse response) {
         UserModel user = userMapper.selectUserByUsername(loginRequestdto.getUsername());
 
         if (user == null || !passwordEncoder.matches(loginRequestdto.getPassword(), user.getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "아이디 혹은 비밀번호가 올바르지 않습니다."));
+            throw new RuntimeException("아이디 혹은 비밀번호가 올바르지 않습니다.");
         }
         // 로그인 성공 시 JWT access, refresh 토큰 발급
         String accessToken = jwtUtil.generateAccessToken(user.getUsername());
         String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
 
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", refreshToken)
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(7 * 24 * 60 * 60)
-                .sameSite("Strict")
-                .build();
+        // Access Token 쿠키 생성
+        Cookie accessTokenCookie = new Cookie("accessToken", accessToken);
+        accessTokenCookie.setHttpOnly(true); // 클라이언트 스크립트 접근 불가
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(900);
+        // accessTokenCookie.setSecure(true);
+        response.addCookie(accessTokenCookie);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+        // Refresh Token 쿠키 생성
+        Cookie refreshTokenCookie = new Cookie("refreshToken", refreshToken);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(7 * 24 * 3600);
+        // refreshTokenCookie.setSecure(true);
+        response.addCookie(refreshTokenCookie);
 
         AuthResponseDTO authResponseDTO = new AuthResponseDTO();
         authResponseDTO.setAccessToken(accessToken);
+        authResponseDTO.setRefreshToken(refreshToken);
 
 
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(authResponseDTO);
+        return "로그인 성공";
     }
 
-    public ResponseEntity<?> refreshAccessToken(HttpServletRequest request) {
+    public AuthResponseDTO refreshAccessToken(HttpServletRequest request) {
         
         //쿠키에서 리프레시 토큰 가져오기
         String refreshToken = null;
@@ -83,7 +89,7 @@ public class UserService {
         }
 
         if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Refresh Token이 유효하지 않습니다."));
+            throw new RuntimeException("Refresh Token이 유효하지 않습니다.");
         }
 
 
@@ -91,41 +97,25 @@ public class UserService {
         String newAccessToken = jwtUtil.generateAccessToken(username);
         String newRefreshToken = jwtUtil.generateRefreshToken(username);
 
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", newRefreshToken)
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(7 * 24 * 60 * 60)
-                .sameSite("Strict")
-                .build();
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
-
         AuthResponseDTO authResponseDTO = new AuthResponseDTO();
         authResponseDTO.setAccessToken(newAccessToken);
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(authResponseDTO);
+        authResponseDTO.setRefreshToken(newRefreshToken);
+        return authResponseDTO;
     }
 
 
-    public ResponseEntity<?> logout() {
-        ResponseCookie refreshTokenCookie = ResponseCookie.from("refreshToken", "")
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(0)
-                .sameSite("Strict")
-                .build();
+    public String  logout(HttpServletResponse response) {
+        Cookie accessTokenCookie = new Cookie("accessToken", null);
+        accessTokenCookie.setHttpOnly(true);
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(0);  // 즉시 삭제
+        response.addCookie(accessTokenCookie);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
-
-        return  ResponseEntity.ok()
-                .headers(headers)
-                .body(Map.of("message", "로그아웃 성공"));
+        Cookie refreshTokenCookie = new Cookie("refreshToken", null);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(0);
+        response.addCookie(refreshTokenCookie);
+        return "로그아웃 성공";
     }
-
 }
