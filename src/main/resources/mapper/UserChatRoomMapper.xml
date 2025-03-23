@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.backend.common.mapper.UserChatRoomMapper">
+
+    <!-- 사용자 채팅방 참여 -->
+    <insert id="insertUserChatRoom" parameterType="com.example.backend.common.model.UserChatRoom">
+        INSERT INTO user_chat_rooms (userId, chatRoomId, joinedAt)
+        VALUES (#{userId}, #{chatRoomId}, #{joinedAt})
+    </insert>
+
+    <!-- 특정 유저가 참여한 채팅방 목록 -->
+    <select id="selectChatRoomsByUserId" resultType="com.example.backend.common.model.UserChatRoom">
+        SELECT id, userId, chatRoomId, joinedAt
+        FROM user_chat_rooms
+        WHERE userId = #{userId}
+    </select>
+
+    <!-- 특정 채팅방에 참여한 사용자 목록 -->
+    <select id="selectUsersByRoomId" resultType="com.example.backend.common.model.UserChatRoom">
+        SELECT id, userId, chatRoomId, joinedAt
+        FROM user_chat_rooms
+        WHERE chatRoomId = #{chatRoomId}
+    </select>
+
+</mapper>
