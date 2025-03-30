@@ -31,12 +31,6 @@ public class ChatController {
     }
     
     //친구간 1:1 채팅
-    /*@PostMapping("/private")
-    public ChatRoomModel createPrivateRoom(@RequestParam Long userId, @RequestParam Long friendId) {
-        return chatService.createPrivateChatRoom(userId, friendId);
-    }*/
-
-
     @PostMapping("/private/start")
     public ResponseEntity<Long> startPrivateChat(@RequestBody Map<String, Long> body) {
         Long friendId = body.get("friendId");
