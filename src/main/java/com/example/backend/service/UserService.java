@@ -29,12 +29,18 @@ public class UserService {
     private final UserProfileService userProfileService;
 
     public String  registerUser(SignupRequestDTO signupRequestDTO) {
-        // 이미 등록된 아이디인지 확인
+        // 아이디 중복 체크
         UserModel existingUser = userMapper.selectUserByUsername(signupRequestDTO.getUsername());
-
         if (existingUser != null) {
             throw new CustomException(CustomExceptionEnum.USERNAME_ALREADY_EXISTS);
         }
+
+        // 닉네임 중복 체크
+        boolean nicknameExists = userMapper.existsByNickname(signupRequestDTO.getNickname());
+        if (nicknameExists) {
+            throw new CustomException(CustomExceptionEnum.DUPLICATE_NICKNAME);
+        }
+
         // 비밀번호 암호화 및 사용자 생성
         UserModel newUser = new UserModel();
         newUser.setUsername(signupRequestDTO.getUsername());
@@ -144,6 +150,7 @@ public class UserService {
 
         return user;
     }
+
 
 
 

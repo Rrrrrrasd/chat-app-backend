@@ -21,6 +21,17 @@
           AND deleted_at IS NULL
     </select>
 
+    <select id="selectUserByNickname" resultMap="UserModelResultMap">
+        SELECT * FROM USERS WHERE nickname = #{nickname}
+    </select>
+
+    <select id="existsByNickname" parameterType="String" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM USERS
+        WHERE nickname = #{nickname}
+          AND deleted_at IS NULL
+    </select>
+
     <select id="selectUserById" parameterType="long" resultMap="UserModelResultMap">
         SELECT * FROM USERS
         WHERE id = #{id}

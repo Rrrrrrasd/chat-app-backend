@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/chat")
@@ -28,6 +29,20 @@ public class ChatController {
                                     @RequestParam Long createdBy) {
         return chatService.createChatRoom(name, createdBy);
     }
+    
+    //친구간 1:1 채팅
+    /*@PostMapping("/private")
+    public ChatRoomModel createPrivateRoom(@RequestParam Long userId, @RequestParam Long friendId) {
+        return chatService.createPrivateChatRoom(userId, friendId);
+    }*/
+
+
+    @PostMapping("/private/start")
+    public ResponseEntity<Long> startPrivateChat(@RequestBody Map<String, Long> body) {
+        Long friendId = body.get("friendId");
+        ChatRoomModel room = chatService.startPrivateChatWithAuthentication(friendId);
+        return ResponseEntity.ok(room.getId());
+    }
 
     // 채팅방 목록 조회
     @GetMapping("/rooms")
@@ -44,27 +59,21 @@ public class ChatController {
     //채팅방 참여
     @PostMapping("/rooms/{roomId}/join")
     public String joinRoom(@PathVariable Long roomId) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserModel user = userMapper.selectUserByUsername(username);
-        chatService.joinChatRoom(user.getId(), roomId);
+        chatService.joinChatRoomWithAuthentication(roomId);
         return "채팅방 참여 성공";
     }
 
     // 신규 엔드포인트: 현재 사용자가 가입한 채팅방 목록 조회
+    // 내가 참여한 채팅방 목록
     @GetMapping("/myrooms")
     public List<ChatRoomModel> getMyChatRooms() {
-        // SecurityContextHolder에서 현재 사용자 username을 가져옴
-        String username = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        UserModel user = userMapper.selectUserByUsername(username);
-        return chatService.getChatRoomsByUserId(user.getId());
+        return chatService.getMyRoomsWithAuthentication();
     }
 
     //채팅방에서 퇴장
     @DeleteMapping("/rooms/{roomId}/leave")
     public String leaveRoom(@PathVariable Long roomId) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserModel user = userMapper.selectUserByUsername(username);
-        chatService.leaveChatRoom(user.getId(), roomId);
+        chatService.leaveChatRoomWithAuthentication(roomId);
         return "채팅방 퇴장 완료";
     }
 }

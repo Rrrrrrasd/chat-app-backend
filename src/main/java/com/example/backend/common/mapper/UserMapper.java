@@ -9,6 +9,8 @@ import org.apache.ibatis.annotations.Param;
 public interface UserMapper {
     UserModel selectUserByUsername(@Param("username") String username);
     UserModel selectUserById(@Param("id") Long id);
+    UserModel selectUserByNickname(@Param("nickname") String nickname);
     int insertUser(UserModel user);
+    boolean existsByNickname(String nickname);
     int updateUser(UserModel user);
 }

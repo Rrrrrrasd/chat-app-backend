@@ -33,12 +33,39 @@
         WHERE deleted_at IS NULL
     </select>
 
+    <!-- ChatRoomMapper.xml -->
+    <select id="selectPrivateRoomByUserIds" resultMap="ChatRoomModelResultMap">
+        SELECT cr.*
+        FROM CHAT_ROOMS cr
+                 JOIN USER_CHAT_ROOMS ucr1 ON cr.id = ucr1.chat_room_id
+                 JOIN USER_CHAT_ROOMS ucr2 ON cr.id = ucr2.chat_room_id
+        WHERE ucr1.user_id = #{userId1}
+          AND ucr2.user_id = #{userId2}
+          AND cr.name LIKE '% - %'
+        GROUP BY cr.id
+        HAVING COUNT(DISTINCT ucr1.user_id) = 1 AND COUNT(DISTINCT ucr2.user_id) = 1
+    </select>
+
     <update id="updateChatRoom" parameterType="com.example.backend.common.model.ChatRoomModel">
         UPDATE CHAT_ROOMS
         SET name = #{name},
             updated_at = #{updatedAt},
             deleted_at = #{deletedAt}
         WHERE id = #{id}
+    </update>
+
+    <!-- 1:1 채팅방 소프트 딜리트: 두 사용자의 관계에 해당하는 채팅방의 deleted_at 컬럼에 타임스탬프 업데이트 -->
+    <update id="softDeletePrivateChatRoomById" parameterType="map">
+        UPDATE chat_rooms
+        SET deleted_at = #{deletedAt}
+        WHERE id = #{chatRoomId}
+    </update>
+
+    <!-- 채팅방 복원: deleted_at을 NULL로 업데이트 -->
+    <update id="restorePrivateChatRoomById" parameterType="long">
+        UPDATE chat_rooms
+        SET deleted_at = NULL
+        WHERE id = #{chatRoomId}
     </update>
 
 </mapper>
