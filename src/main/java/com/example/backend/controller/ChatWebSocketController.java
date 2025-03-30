@@ -1,29 +1,46 @@
 package com.example.backend.controller;
 
-import com.example.backend.common.model.ChatMessage;
+import com.example.backend.common.mapper.UserMapper;
+import com.example.backend.common.model.ChatMessageModel;
+import com.example.backend.common.model.UserModel;
 import com.example.backend.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
+
+import java.security.Principal;
 
 @Controller
 @RequiredArgsConstructor
 public class ChatWebSocketController {
 
     private final ChatService chatService;
+    private final SimpMessagingTemplate messagingTemplate;
+    private final UserMapper userMapper;
 
-    // 클라이언트에서 "/app/chat.sendMessage"로 보낸 메시지 처리
     @MessageMapping("/chat.sendMessage")
-    @SendTo("/topic/public")
-    // (예) 모든 구독자에게 방송. 방별로 구독하려면 /topic/room.{roomId} 형식 사용
-    public ChatMessage sendMessage(ChatMessage message) {
-        // DB 저장
-        ChatMessage saved = chatService.saveMessage(
+    public void sendMessage(ChatMessageModel message, Principal principal) {
+        System.out.println("🔔 WebSocket 메시지 수신됨: " + message);
+
+        //현재 사용자 정보 가져오기 (JWT 기반)
+        String username = principal.getName();
+        UserModel sender = userMapper.selectUserByUsername(username);
+
+        //메시지 저장
+        ChatMessageModel saved = chatService.saveMessage(
                 message.getChatRoomId(),
-                message.getSenderId(),
+                sender.getId(), // 인증된 사용자 ID 사용
                 message.getMessage()
         );
-        return saved; // 이 값이 /topic/public 구독자들에게 전달됨
+
+        saved.setNickname(sender.getNickname());
+
+        //실시간 메시지 전송
+        messagingTemplate.convertAndSend(
+                "/topic/room." + message.getChatRoomId(),
+                saved
+        );
     }
 }

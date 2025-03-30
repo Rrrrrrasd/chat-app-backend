@@ -4,17 +4,37 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.backend.common.mapper.ChatMessageMapper">
 
+
+    <resultMap id="ChatMessageModelResultMap" type="com.example.backend.common.model.ChatMessageModel">
+        <id property="id" column="id"/>
+        <result property="chatRoomId" column="chat_room_id"/>
+        <result property="senderId" column="sender_id"/>
+        <result property="message" column="message"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="deletedAt" column="deleted_at"/>
+    </resultMap>
+
     <!-- 메시지 저장 -->
-    <insert id="insertChatMessage" parameterType="com.example.backend.common.model.ChatMessage">
-        INSERT INTO chat_messages (chatRoomId, senderId, message, timestamp)
-        VALUES (#{chatRoomId}, #{senderId}, #{message}, #{timestamp})
+    <insert id="insertChatMessage" parameterType="com.example.backend.common.model.ChatMessageModel" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO CHAT_MESSAGES (chat_room_id, sender_id, message, created_at, updated_at)
+        VALUES (#{chatRoomId}, #{senderId}, #{message}, #{createdAt}, #{updatedAt})
     </insert>
 
     <!-- 특정 채팅방의 메시지 목록 조회 -->
-    <select id="selectMessagesByRoomId" resultType="com.example.backend.common.model.ChatMessage">
-        SELECT id, chatRoomId, senderId, message, timestamp
-        FROM chat_messages
-        WHERE chatRoomId = #{chatRoomId}
-        ORDER BY timestamp ASC
+    <select id="selectMessagesByRoomId" parameterType="long" resultMap="ChatMessageModelResultMap">
+        SELECT * FROM CHAT_MESSAGES
+        WHERE chat_room_id = #{chatRoomId}
+          AND deleted_at IS NULL
     </select>
+
+    <!-- 메시지 업데이트 -->
+    <update id="updateChatMessage" parameterType="com.example.backend.common.model.ChatMessageModel">
+        UPDATE CHAT_MESSAGES
+        SET message = #{message},
+            updated_at = #{updatedAt},
+            deleted_at = #{deletedAt}
+        WHERE id = #{id}
+    </update>
+
 </mapper>

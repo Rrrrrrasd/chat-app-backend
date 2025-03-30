@@ -4,27 +4,41 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.backend.common.mapper.ChatRoomMapper">
 
+
+    <resultMap id="ChatRoomModelResultMap" type="com.example.backend.common.model.ChatRoomModel">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="createdBy" column="created_by"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+        <result property="deletedAt" column="deleted_at"/>
+    </resultMap>
+
     <!-- 채팅방 생성 -->
-    <insert id="insertChatRoom" parameterType="com.example.backend.common.model.ChatRoom">
-        INSERT INTO chat_rooms (name, createdBy, createdAt)
-        VALUES (#{name}, #{createdBy}, #{createdAt})
-        <selectKey keyProperty="id" resultType="long" order="AFTER">
-            SELECT LAST_INSERT_ID()
-        </selectKey>
+    <insert id="insertChatRoom" parameterType="com.example.backend.common.model.ChatRoomModel" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO CHAT_ROOMS (name, created_by, created_at, updated_at)
+        VALUES (#{name}, #{createdBy}, #{createdAt}, #{updatedAt})
     </insert>
 
     <!-- 특정 채팅방 조회 -->
-    <select id="selectChatRoomById" resultType="com.example.backend.common.model.ChatRoom">
-        SELECT id, name, createdBy, createdAt
-        FROM chat_rooms
+    <select id="selectChatRoomById" parameterType="long" resultMap="ChatRoomModelResultMap">
+        SELECT * FROM CHAT_ROOMS
         WHERE id = #{id}
+          AND deleted_at IS NULL
     </select>
 
     <!-- 모든 채팅방 목록 조회 (옵션) -->
-    <select id="selectAllChatRooms" resultType="com.example.backend.common.model.ChatRoom">
-        SELECT id, name, createdBy, createdAt
-        FROM chat_rooms
-        ORDER BY createdAt DESC
+    <select id="selectAllChatRooms" resultMap="ChatRoomModelResultMap">
+        SELECT * FROM CHAT_ROOMS
+        WHERE deleted_at IS NULL
     </select>
+
+    <update id="updateChatRoom" parameterType="com.example.backend.common.model.ChatRoomModel">
+        UPDATE CHAT_ROOMS
+        SET name = #{name},
+            updated_at = #{updatedAt},
+            deleted_at = #{deletedAt}
+        WHERE id = #{id}
+    </update>
 
 </mapper>

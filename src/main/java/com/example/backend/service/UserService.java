@@ -1,26 +1,23 @@
 package com.example.backend.service;
 
 import com.example.backend.common.dto.AuthResponseDTO;
+import com.example.backend.common.exception.CustomException;
+import com.example.backend.common.exception.CustomExceptionEnum;
 import com.example.backend.common.mapper.UserMapper;
 import com.example.backend.common.model.UserModel;
+import com.example.backend.common.model.UserProfilesModel;
 import com.example.backend.common.util.JwtUtil;
-
 import com.example.backend.common.dto.LoginRequestDTO;
 import com.example.backend.common.dto.SignupRequestDTO;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.WebUtils;
-
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,13 +26,14 @@ public class UserService {
     private final UserMapper userMapper;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final UserProfileService userProfileService;
 
     public String  registerUser(SignupRequestDTO signupRequestDTO) {
         // 이미 등록된 아이디인지 확인
         UserModel existingUser = userMapper.selectUserByUsername(signupRequestDTO.getUsername());
 
         if (existingUser != null) {
-            throw new RuntimeException("이미 사용 중인 아이디입니다.");
+            throw new CustomException(CustomExceptionEnum.USERNAME_ALREADY_EXISTS);
         }
         // 비밀번호 암호화 및 사용자 생성
         UserModel newUser = new UserModel();
@@ -43,6 +41,14 @@ public class UserService {
         newUser.setPassword(passwordEncoder.encode(signupRequestDTO.getPassword()));
         newUser.setNickname(signupRequestDTO.getNickname());
         userMapper.insertUser(newUser);
+
+        // 신규 사용자 등록 후 기본 사용자 프로필 생성
+        UserProfilesModel userProfile = new UserProfilesModel();
+        userProfile.setUserId(newUser.getId());
+        userProfile.setStatusMessage("");
+        userProfile.setProfileImage("");
+        userProfileService.createUserProfile(userProfile);
+
         return "회원가입이 성공적으로 완료되었습니다.";
     }
 
@@ -50,7 +56,7 @@ public class UserService {
         UserModel user = userMapper.selectUserByUsername(loginRequestdto.getUsername());
 
         if (user == null || !passwordEncoder.matches(loginRequestdto.getPassword(), user.getPassword())) {
-            throw new RuntimeException("아이디 혹은 비밀번호가 올바르지 않습니다.");
+            throw new CustomException(CustomExceptionEnum.INVALID_CREDENTIALS);
         }
         // 로그인 성공 시 JWT access, refresh 토큰 발급
         String accessToken = jwtUtil.generateAccessToken(user.getUsername());
@@ -88,10 +94,11 @@ public class UserService {
             refreshToken = WebUtils.getCookie(request, "refreshToken").getValue();
         }
 
-        if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
-            throw new RuntimeException("Refresh Token이 유효하지 않습니다.");
+        if (refreshToken == null) {
+            throw new CustomException(CustomExceptionEnum.INVALID_REFRESH_TOKEN);
         }
 
+        jwtUtil.validateToken(refreshToken);
 
         String username = jwtUtil.getUsernameFromToken(refreshToken);
         String newAccessToken = jwtUtil.generateAccessToken(username);
@@ -100,6 +107,8 @@ public class UserService {
         AuthResponseDTO authResponseDTO = new AuthResponseDTO();
         authResponseDTO.setAccessToken(newAccessToken);
         authResponseDTO.setRefreshToken(newRefreshToken);
+        authResponseDTO.setExp(jwtUtil.getExpiration(newAccessToken));
+
         return authResponseDTO;
     }
 
@@ -118,4 +127,24 @@ public class UserService {
         response.addCookie(refreshTokenCookie);
         return "로그아웃 성공";
     }
+
+    public UserModel getCurrentAuthenticatedUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        if (authentication == null || !authentication.isAuthenticated()
+                || authentication.getPrincipal().equals("anonymousUser")) {
+            throw new CustomException(CustomExceptionEnum.UNAUTHORIZED);
+        }
+
+        String username = (String) authentication.getPrincipal();
+        UserModel user = userMapper.selectUserByUsername(username);
+        if (user == null) {
+            throw new CustomException(CustomExceptionEnum.USER_NOT_FOUND);
+        }
+
+        return user;
+    }
+
+
+
 }

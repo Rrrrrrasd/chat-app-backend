@@ -4,24 +4,46 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.backend.common.mapper.UserChatRoomMapper">
 
-    <!-- 사용자 채팅방 참여 -->
-    <insert id="insertUserChatRoom" parameterType="com.example.backend.common.model.UserChatRoom">
-        INSERT INTO user_chat_rooms (userId, chatRoomId, joinedAt)
-        VALUES (#{userId}, #{chatRoomId}, #{joinedAt})
+
+    <resultMap id="UserChatRoomModelResultMap" type="com.example.backend.common.model.UserChatRoomModel">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="chatRoomId" column="chat_room_id"/>
+        <result property="joinedAt" column="joined_at"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <!-- 사용자 채팅방 참여 (auto-generated id 반환) -->
+    <insert id="insertUserChatRoom" parameterType="com.example.backend.common.model.UserChatRoomModel" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO USER_CHAT_ROOMS (user_id, chat_room_id, joined_at, created_at, updated_at)
+        VALUES (#{userId}, #{chatRoomId}, #{joinedAt}, #{createdAt}, #{updatedAt})
     </insert>
 
     <!-- 특정 유저가 참여한 채팅방 목록 -->
-    <select id="selectChatRoomsByUserId" resultType="com.example.backend.common.model.UserChatRoom">
-        SELECT id, userId, chatRoomId, joinedAt
-        FROM user_chat_rooms
-        WHERE userId = #{userId}
+    <select id="selectChatRoomsByUserId" parameterType="long" resultMap="UserChatRoomModelResultMap">
+        SELECT * FROM USER_CHAT_ROOMS
+        WHERE user_id = #{userId}
     </select>
 
     <!-- 특정 채팅방에 참여한 사용자 목록 -->
-    <select id="selectUsersByRoomId" resultType="com.example.backend.common.model.UserChatRoom">
-        SELECT id, userId, chatRoomId, joinedAt
-        FROM user_chat_rooms
-        WHERE chatRoomId = #{chatRoomId}
+    <select id="selectUsersByRoomId" parameterType="long" resultMap="UserChatRoomModelResultMap">
+        SELECT * FROM USER_CHAT_ROOMS
+        WHERE chat_room_id = #{chatRoomId}
     </select>
+
+    <!-- 채팅방 참여 정보 업데이트 -->
+    <update id="updateUserChatRoom" parameterType="com.example.backend.common.model.UserChatRoomModel">
+        UPDATE USER_CHAT_ROOMS
+        SET joined_at = #{joinedAt},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteUserChatRoom">
+        DELETE FROM USER_CHAT_ROOMS
+        WHERE user_id = #{userId}
+          AND chat_room_id = #{chatRoomId}
+    </delete>
 
 </mapper>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.backend.common.mapper.FriendshipMapper">
+
+    <resultMap id="FriendshipModelResultMap" type="com.example.backend.common.model.FriendshipModel">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="friendId" column="friend_id"/>
+        <result property="status" column="status"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
+    </resultMap>
+
+    <select id="selectFriendshipById" parameterType="long" resultMap="FriendshipModelResultMap">
+        SELECT * FROM FRIENDSHIP WHERE id = #{id}
+    </select>
+
+    <select id="selectFriendshipsByUserId" parameterType="long" resultMap="FriendshipModelResultMap">
+        SELECT * FROM FRIENDSHIP
+        WHERE user_id = #{userId}
+    </select>
+
+    <insert id="insertFriendship" parameterType="com.example.backend.common.model.FriendshipModel" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO FRIENDSHIP (user_id, friend_id, status, created_at, updated_at)
+        VALUES (#{userId}, #{friendId}, #{status}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="updateFriendship" parameterType="com.example.backend.common.model.FriendshipModel">
+        UPDATE FRIENDSHIP
+        SET status = #{status},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+</mapper>
