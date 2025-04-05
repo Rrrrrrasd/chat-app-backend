@@ -1,5 +1,6 @@
 package com.example.backend.common.exception;
 
+import com.example.backend.common.dto.ErrorResponseDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,25 +14,25 @@ public class ExceptionControllerAdvice {
 
     // CustomException 처리
     @ExceptionHandler(CustomException.class)
-    public ResponseEntity<Map<String, Object>> handleCustomException(CustomException ex) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", ex.getStatus().value());
-        error.put("error", ex.getStatus().getReasonPhrase());
-        error.put("message", ex.getMessage());
-
-        return ResponseEntity.status(ex.getStatus()).body(error);
+    public ResponseEntity<ErrorResponseDTO> handleCustomException(CustomException ex) {
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                LocalDateTime.now(),
+                ex.getStatus().value(),
+                ex.getStatus().getReasonPhrase(),
+                ex.getMessage()
+        );
+        return ResponseEntity.status(ex.getStatus()).body(errorResponse);
     }
 
     // 예상하지 못한 모든 예외 처리
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", 500);
-        error.put("error", "Internal Server Error");
-        error.put("message", ex.getMessage());
-
-        return ResponseEntity.status(500).body(error);
+    public ResponseEntity<ErrorResponseDTO> handleGeneralException(Exception ex) {
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO(
+                LocalDateTime.now(),
+                500,
+                "Internal Server Error",
+                ex.getMessage()
+        );
+        return ResponseEntity.status(500).body(errorResponse);
     }
 }

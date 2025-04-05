@@ -40,7 +40,7 @@
 
     <insert id="insertUser" parameterType="com.example.backend.common.model.UserModel" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO USERS (username, password, nickname, created_at, updated_at)
-        VALUES (#{username}, #{password}, #{nickname}, #{createdAt}, #{updatedAt})
+        VALUES (#{username}, #{password}, #{nickname}, NOW(), NOW())
     </insert>
 
     <update id="updateUser" parameterType="com.example.backend.common.model.UserModel">

@@ -5,7 +5,9 @@ import com.example.backend.common.exception.CustomException;
 import com.example.backend.common.exception.CustomExceptionEnum;
 import com.example.backend.common.mapper.UserMapper;
 import com.example.backend.common.model.UserModel;
-import com.example.backend.common.model.UserProfilesModel;
+
+import com.example.backend.common.model.UserProfileImageModel;
+import com.example.backend.common.model.UserStatusModel;
 import com.example.backend.common.util.JwtUtil;
 import com.example.backend.common.dto.LoginRequestDTO;
 import com.example.backend.common.dto.SignupRequestDTO;
@@ -19,6 +21,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.WebUtils;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -26,9 +30,10 @@ public class UserService {
     private final UserMapper userMapper;
     private final JwtUtil jwtUtil;
     private final BCryptPasswordEncoder passwordEncoder;
-    private final UserProfileService userProfileService;
+    private final UserStatusService userStatusService;
+    private final UserProfileImageService userProfileImageService;
 
-    public String  registerUser(SignupRequestDTO signupRequestDTO) {
+    public String registerUser(SignupRequestDTO signupRequestDTO) {
         // 아이디 중복 체크
         UserModel existingUser = userMapper.selectUserByUsername(signupRequestDTO.getUsername());
         if (existingUser != null) {
@@ -48,12 +53,19 @@ public class UserService {
         newUser.setNickname(signupRequestDTO.getNickname());
         userMapper.insertUser(newUser);
 
-        // 신규 사용자 등록 후 기본 사용자 프로필 생성
-        UserProfilesModel userProfile = new UserProfilesModel();
-        userProfile.setUserId(newUser.getId());
-        userProfile.setStatusMessage("");
-        userProfile.setProfileImage("");
-        userProfileService.createUserProfile(userProfile);
+        // 신규 사용자 등록 후 기본 사용자 상태 생성
+        UserStatusModel userStatus = new UserStatusModel();
+        userStatus.setUserId(newUser.getId());
+        userStatus.setStatusMessage(""); // 초기 상태 메시지 (빈 문자열)
+        userStatus.setUpdatedAt(LocalDateTime.now());
+        userStatusService.createUserStatus(userStatus);
+
+        // 기본 프로필 이미지 생성 (빈 문자열 또는 기본 이미지 경로)
+        UserProfileImageModel profileImage = new UserProfileImageModel();
+        profileImage.setUserId(newUser.getId());
+        profileImage.setProfileImage(""); // 기본값 설정
+        profileImage.setUpdatedAt(LocalDateTime.now());
+        userProfileImageService.createUserProfileImage(profileImage);
 
         return "회원가입이 성공적으로 완료되었습니다.";
     }

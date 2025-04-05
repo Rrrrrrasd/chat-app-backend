@@ -23,6 +23,7 @@ public class FriendshipService {
     private final FriendshipMapper friendshipMapper;
     private final UserMapper userMapper;
     private final ChatRoomMapper chatRoomMapper;
+    private final NotificationService notificationService;
 
     // 1. 친구 요청 (PENDING)
     public void addFriend(FriendshipModel friendship) {
@@ -31,6 +32,21 @@ public class FriendshipService {
         friendship.setUpdatedAt(now);
         friendship.setStatus("PENDING");
         friendshipMapper.insertFriendship(friendship);
+        // 로그 추가
+        System.out.println("친구 요청 삽입 완료: " + friendship);
+
+
+        // 친구 요청을 보낸 후, 대상 사용자에게 알림 생성
+        UserModel sender = getCurrentUser(); // 현재 로그인 사용자
+        UserModel targetUser = userMapper.selectUserById(friendship.getFriendId());
+        if (targetUser != null) {
+            String message = sender.getNickname() + "님에게서 친구요청이 왔습니다.";
+            notificationService.createNotification(
+                    targetUser.getId(),
+                    "FRIEND_REQUEST",
+                    message
+            );
+        }
     }
 
     // 2. 친구 요청 수락/거절 (ACCEPTED / REJECTED)
@@ -145,24 +161,27 @@ public class FriendshipService {
         if (friend == null) {
             return "존재하지 않는 닉네임입니다.";
         }
-
         if (friend.getId().equals(userId)) {
             return "자기 자신에게 친구 요청을 보낼 수 없습니다.";
         }
-
         FriendshipModel existing = friendshipMapper.selectFriendship(userId, friend.getId());
         if (existing != null && !"REJECTED".equals(existing.getStatus())) {
             return "이미 친구 요청을 보냈거나 친구 상태입니다.";
         }
-
         FriendshipModel friendship = new FriendshipModel();
         friendship.setUserId(userId);
         friendship.setFriendId(friend.getId());
         friendship.setStatus("PENDING");
         friendship.setCreatedAt(LocalDateTime.now());
         friendship.setUpdatedAt(LocalDateTime.now());
-
         friendshipMapper.insertFriendship(friendship);
+
+        // 친구 요청 알림 생성 추가
+        // 예: 현재 요청 보낸 사용자의 닉네임을 사용해서 알림 메시지 생성
+        UserModel sender = userMapper.selectUserById(userId);
+        String notificationMessage = sender.getNickname() + "님에게서 친구요청이 왔습니다.";
+        notificationService.createNotification(friend.getId(), "FRIEND_REQUEST", notificationMessage);
+
         return "친구 요청을 보냈습니다.";
     }
 

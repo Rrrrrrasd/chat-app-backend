@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.backend.common.mapper.UserStatusMapper">
+    <insert id="insertUserStatus" parameterType="com.example.backend.common.model.UserStatusModel">
+        INSERT INTO USER_STATUS(user_id, status_message, updated_at)
+        VALUES(#{userId}, #{statusMessage}, #{updatedAt})
+    </insert>
+
+    <select id="selectUserStatusByUserId" parameterType="long" resultType="com.example.backend.common.model.UserStatusModel">
+        SELECT * FROM USER_STATUS WHERE user_id = #{userId}
+    </select>
+
+    <update id="updateUserStatus" parameterType="com.example.backend.common.model.UserStatusModel">
+        UPDATE USER_STATUS
+        SET status_message = #{statusMessage}, updated_at = #{updatedAt}
+        WHERE user_id = #{userId}
+    </update>
+</mapper>
+

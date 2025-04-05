@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.backend.common.mapper.NotificationMapper">
+    <insert id="insertNotification" parameterType="com.example.backend.common.model.NotificationModel" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO NOTIFICATIONS (user_id, type, message, is_read, created_at, updated_at)
+        VALUES (#{userId}, #{type}, #{message}, #{isRead}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <select id="selectNotificationsByUserId" resultType="com.example.backend.common.model.NotificationModel">
+        SELECT id, user_id, type, message, is_read, created_at, updated_at
+        FROM NOTIFICATIONS
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <update id="updateNotification" parameterType="com.example.backend.common.model.NotificationModel">
+        UPDATE NOTIFICATIONS
+        SET is_read = #{isRead},
+            updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteNotification" parameterType="long">
+        DELETE FROM NOTIFICATIONS
+        WHERE id = #{id}
+    </delete>
+</mapper>

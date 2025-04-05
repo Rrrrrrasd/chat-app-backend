@@ -6,12 +6,12 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-public class UserProfilesModel {
+public class NotificationModel {
     private Long id;
     private Long userId;
-    private String statusMessage;
-    private String profileImage;
+    private String type;       // 예: FRIEND_REQUEST, MESSAGE 등
+    private String message;
+    private Boolean isRead;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private LocalDateTime deletedAt;
 }
