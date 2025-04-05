@@ -25,7 +25,7 @@ public class FriendshipService {
     private final ChatRoomMapper chatRoomMapper;
     private final NotificationService notificationService;
 
-    // 1. 친구 요청 (PENDING)
+    // 친구 요청 (PENDING)
     public void addFriend(FriendshipModel friendship) {
         LocalDateTime now = LocalDateTime.now();
         friendship.setCreatedAt(now);
@@ -49,16 +49,13 @@ public class FriendshipService {
         }
     }
 
-    // 2. 친구 요청 수락/거절 (ACCEPTED / REJECTED)
+    // 친구 요청 수락/거절 (ACCEPTED / REJECTED)
     public void updateFriendship(FriendshipModel friendship) {
         friendship.setUpdatedAt(LocalDateTime.now());
         friendshipMapper.updateFriendship(friendship);
     }
 
-    // 3. 나의 친구 목록 (ACCEPTED 상태)
-    public List<FriendshipModel> getAcceptedFriends(Long userId) {
-        return friendshipMapper.selectAcceptedFriendships(userId);
-    }
+
 
     public List<FriendResponseDTO> getAcceptedFriendNicknamesSecure() {
         String username = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
@@ -76,20 +73,7 @@ public class FriendshipService {
         }).toList();
     }
 
-    // 4. 나에게 온 친구 요청 목록 (PENDING 상태)
-    public List<FriendshipModel> getPendingRequests(Long userId) {
-        System.out.println("💡 받은 친구 요청 조회: userId = " + userId);
-        return friendshipMapper.selectPendingRequests(userId);
-    }
-
-    // 5. 차단 목록 (BLOCKED 상태)
-    public List<FriendshipModel> getBlockedFriends(Long userId) {
-        return friendshipMapper.selectFriendshipsByUserId(userId).stream()
-                .filter(f -> "BLOCKED".equals(f.getStatus()))
-                .toList();
-    }
-
-    // 6. 차단
+    // 차단
     public void blockFriendSecure(Long targetId) {
         UserModel me = getCurrentUser();
 
@@ -127,7 +111,7 @@ public class FriendshipService {
         }
     }
 
-    // 7. 차단 해제
+    // 차단 해제
     public void unblockFriendSecure(Long targetId) {
         UserModel me = getCurrentUser();
         FriendshipModel existing = friendshipMapper.selectFriendship(me.getId(), targetId);
@@ -149,7 +133,7 @@ public class FriendshipService {
         }
     }
 
-    // 8. 현재 로그인 유저
+    //현재 로그인 유저
     private UserModel getCurrentUser() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return userMapper.selectUserByUsername(username);

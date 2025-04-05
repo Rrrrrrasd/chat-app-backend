@@ -32,14 +32,6 @@ public class NotificationService {
         return notificationMapper.selectNotificationsByUserId(userId);
     }
 
-    // 특정 알림을 읽음 처리
-    public void markNotificationAsRead(Long notificationId) {
-        NotificationModel notification = new NotificationModel();
-        notification.setId(notificationId);
-        notification.setIsRead(true);
-        notification.setUpdatedAt(LocalDateTime.now());
-        notificationMapper.updateNotification(notification);
-    }
 
     public void deleteNotification(Long notificationId) {
         notificationMapper.deleteNotification(notificationId);

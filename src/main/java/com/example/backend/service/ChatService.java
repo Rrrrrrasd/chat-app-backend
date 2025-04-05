@@ -185,16 +185,6 @@ public class ChatService {
                 .toList();
     }
 
-    //특정 채팅방 정보
-    public ChatRoomModel getChatRoom(Long roomId) {
-
-        ChatRoomModel room = chatRoomMapper.selectChatRoomById(roomId);
-        if (room == null) {
-            throw new CustomException(CustomExceptionEnum.CHAT_ROOM_NOT_FOUND);
-        }
-        return room;
-    }
-
     // 사용자가 가입한 채팅방 목록 조회
     public List<ChatRoomModel> getChatRoomsByUserId(Long userId) {
         List<UserChatRoomModel> userChatRooms = userChatRoomMapper.selectChatRoomsByUserId(userId);
@@ -211,22 +201,6 @@ public class ChatService {
     }
 
 
-
-    public Long startPrivateChat(Long userId, Long friendId) {
-        ChatRoomModel room = createPrivateChatRoom(userId, friendId);
-        return room.getId();
-    }
-
-
-    public ChatRoomModel startPrivateChatWithAuthentication(Long friendId) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        UserModel me = userMapper.selectUserByUsername(username);
-        if (me == null) {
-            throw new CustomException(CustomExceptionEnum.USER_NOT_FOUND);
-        }
-
-        return createPrivateChatRoom(me.getId(), friendId);
-    }
 
     public void joinChatRoomWithAuthentication(Long roomId) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
