@@ -1,5 +1,7 @@
 package com.example.backend.common.util;
 
+import com.example.backend.common.exception.CustomException;
+import com.example.backend.common.exception.CustomExceptionEnum;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 
@@ -21,6 +23,7 @@ public class JwtUtil {
     private final long refreshTokenExpiration;
 
     public JwtUtil(@Value("${jwt.secret}") String secretKey,
+                   //${jwt.access}
                    @Value("${jwt.access}") long accessTokenExpiration,
                    @Value("${jwt.refresh}") long refreshTokenExpiration) {
         byte[] decodeKey = Base64.getDecoder().decode(secretKey);
@@ -51,22 +54,25 @@ public class JwtUtil {
     }
 
     // 토큰 검증
-    public boolean validateToken(String token) {
+    public void validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token);
-            return true;
         } catch (ExpiredJwtException e) {
-            log.warn("JWT 만료됨: {}", e.getMessage());
+            log.error("JWT 만료됨: {}", e.getMessage());
+            throw new CustomException(CustomExceptionEnum.EXPIRED_TOKEN);
         } catch (UnsupportedJwtException e) {
-            log.warn("지원되지 않는 JWT 형식: {}", e.getMessage());
+            log.error("지원되지 않는 JWT 형식: {}", e.getMessage());
+            throw new CustomException(CustomExceptionEnum.UNSUPPORTED_TOKEN);
         } catch (MalformedJwtException e) {
-            log.warn("잘못된 JWT 형식: {}", e.getMessage());
+            log.error("잘못된 JWT 형식: {}", e.getMessage());
+            throw new CustomException(CustomExceptionEnum.MALFORMED_TOKEN);
         } catch (SignatureException e) {
-            log.warn("JWT 서명 검증 실패: {}", e.getMessage());
+            log.error("JWT 서명 검증 실패: {}", e.getMessage());
+            throw new CustomException(CustomExceptionEnum.INVALID_SIGNATURE);
         } catch (Exception e) {
-            log.warn("JWT 검증 실패: {}", e.getMessage());
+            log.error("JWT 검증 실패: {}", e.getMessage());
+            throw new CustomException(CustomExceptionEnum.JWT_VALIDATION_FAILED);
         }
-        return false;
     }
 
     // 토큰에서 사용자 이름 추출
@@ -77,5 +83,16 @@ public class JwtUtil {
                 .parseClaimsJws(token)
                 .getBody();
         return claims.getSubject();
+    }
+
+    // 추가분
+    public long getExpiration(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.getExpiration().getTime() / 1000;
     }
 }

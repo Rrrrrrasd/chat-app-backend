@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.backend.common.mapper.ChatRoomMapper">
+    <insert id="insertChatRoom" parameterType="com.example.backend.common.model.ChatRoomModel"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO CHAT_ROOMS(name, room_type, created_by, created_at, updated_at)
+        VALUES(#{name}, #{roomType}, #{createdBy}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <select id="selectChatRoomById" parameterType="long" resultType="com.example.backend.common.model.ChatRoomModel">
+        SELECT * FROM CHAT_ROOMS WHERE id = #{id}
+    </select>
+
+    <select id="selectAllChatRooms" resultType="com.example.backend.common.model.ChatRoomModel">
+        SELECT * FROM CHAT_ROOMS
+    </select>
+
+    <select id="selectChatRoomsByType" parameterType="string" resultType="com.example.backend.common.model.ChatRoomModel">
+        SELECT * FROM CHAT_ROOMS WHERE room_type = #{roomType}
+    </select>
+
+    <!-- 1:1 채팅방 조회 시, 두 사용자 간의 채팅방을 room_type='PRIVATE' 조건과 함께 조회 -->
+    <select id="selectPrivateRoomByUserIds" parameterType="map" resultType="com.example.backend.common.model.ChatRoomModel">
+        SELECT *
+        FROM CHAT_ROOMS
+        WHERE room_type = 'PRIVATE'
+          AND (
+            (created_by = #{userId1} AND id IN (SELECT chat_room_id FROM USER_CHAT_ROOMS WHERE user_id = #{userId2}))
+                OR (created_by = #{userId2} AND id IN (SELECT chat_room_id FROM USER_CHAT_ROOMS WHERE user_id = #{userId1}))
+            )
+    </select>
+
+    <update id="softDeletePrivateChatRoomById">
+        UPDATE CHAT_ROOMS
+        SET deleted_at = #{deletedAt}
+        WHERE id = #{chatRoomId}
+    </update>
+
+    <update id="restorePrivateChatRoomById">
+        UPDATE CHAT_ROOMS
+        SET deleted_at = NULL
+        WHERE id = #{chatRoomId}
+    </update>
+
+    <update id="updateChatRoom" parameterType="com.example.backend.common.model.ChatRoomModel">
+        UPDATE CHAT_ROOMS
+        SET name = #{name}, room_type = #{roomType}, updated_at = #{updatedAt}
+        WHERE id = #{id}
+    </update>
+</mapper>
+

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.backend.common.mapper.UserProfileImageMapper">
+    <insert id="insertUserProfileImage" parameterType="com.example.backend.common.model.UserProfileImageModel">
+        INSERT INTO USER_PROFILE_IMAGE(user_id, profile_image, updated_at)
+        VALUES(#{userId}, #{profileImage}, #{updatedAt})
+    </insert>
+
+    <select id="selectUserProfileImageByUserId" parameterType="long" resultType="com.example.backend.common.model.UserProfileImageModel">
+        SELECT * FROM USER_PROFILE_IMAGE WHERE user_id = #{userId}
+    </select>
+
+    <update id="updateUserProfileImage" parameterType="com.example.backend.common.model.UserProfileImageModel">
+        UPDATE USER_PROFILE_IMAGE
+        SET profile_image = #{profileImage}, updated_at = #{updatedAt}
+        WHERE user_id = #{userId}
+    </update>
+</mapper>
+
+

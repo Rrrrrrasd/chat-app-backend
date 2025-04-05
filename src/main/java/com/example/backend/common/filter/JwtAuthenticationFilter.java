@@ -1,6 +1,7 @@
 package com.example.backend.common.filter;
 
 import com.example.backend.common.util.JwtUtil;
+import jakarta.servlet.http.Cookie;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -28,30 +29,50 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        String header = request.getHeader("Authorization");
-        if (!StringUtils.hasText(header) || header.startsWith("Bearer ")) {
+        String token = resolveToken(request); // 쿠키 또는 헤더에서 토큰 추출
+
+        if (!StringUtils.hasText(token)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = header.substring(7);
+        try {
+            jwtUtil.validateToken(token);
 
-        if(!jwtUtil.validateToken(token)){
-            log.warn("유효하지 않은 JWT 토큰: {}", token);
-            filterChain.doFilter(request, response);
-            return;
+            String username = jwtUtil.getUsernameFromToken(token);
+
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
+
+            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+
+        } catch (Exception e) {
+            log.error("JWT 인증 실패: {}", e.getMessage());
+            throw new RuntimeException(e);
         }
-
-
-        String username = jwtUtil.getUsernameFromToken(token);
-
-
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
-
-        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
+    }
+
+    // 쿠키 > Authorization 헤더 순으로 확인
+    private String resolveToken(HttpServletRequest request) {
+        // 쿠키 우선
+        if (request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("accessToken".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+
+        // Authorization 헤더 확인
+        String header = request.getHeader("Authorization");
+        if (StringUtils.hasText(header) && header.startsWith("Bearer ")) {
+            return header.substring(7);
+        }
+
+        return null;
     }
 }
